@@ -33,6 +33,9 @@
       button:disabled { opacity: 0.45; cursor: default; }
       #start { background: #dc2626; color: #fff; border-color: #dc2626; }
       #hint { margin: 6px 0 0; font-size: 11px; opacity: 0.7; }
+      #upload { margin: 4px 0 0; font-size: 11px; min-height: 14px; }
+      #upload.ok { color: #16a34a; }
+      #upload.err { color: #dc2626; }
     </style>
   </head>
   <body>
@@ -40,7 +43,8 @@
     <div id="status">…</div>
     <button id="start">Starta inspelning</button>
     <button id="stop">Stoppa inspelning</button>
-    <p id="hint">Steg skrivs till konsolen och laddas ner som .json när du stoppar.</p>
+    <p id="hint">Steg skrivs till konsolen, laddas ner som .json och skickas till API:t när du stoppar.</p>
+    <p id="upload"></p>
     <script src="popup.js"></script>
   </body>
 </html>

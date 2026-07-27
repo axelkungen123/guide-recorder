@@ -41,10 +41,19 @@ export interface StateResponse {
   ok: true;
   state: RecordingState;
 }
+/** Result of uploading a finished recording to the api. */
+export interface UploadResult {
+  ok: boolean;
+  /** Recording id returned by the api on success. */
+  id?: string;
+  error?: string;
+}
+
 export interface StepsResponse {
   ok: true;
   state: RecordingState;
   steps: Step[];
+  upload: UploadResult;
 }
 export interface AckResponse {
   ok: true;

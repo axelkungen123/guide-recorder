@@ -1,5 +1,6 @@
 import * as recorder from "./recorder";
 import { enqueueCapture } from "./screenshotQueue";
+import { uploadRecording } from "./uploader";
 import type {
   AckResponse,
   ErrorResponse,
@@ -46,7 +47,11 @@ async function stopRecording(): Promise<StepsResponse> {
     `[guide-recorder] Recording stopped — ${steps.length} step(s):`,
   );
   console.log(JSON.stringify(steps, null, 2));
-  return { ok: true, state, steps };
+
+  const upload = await uploadRecording(steps);
+  console.log("[guide-recorder] upload result:", upload);
+
+  return { ok: true, state, steps, upload };
 }
 
 async function injectContentScript(tabId: number): Promise<void> {
