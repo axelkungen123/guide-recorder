@@ -4,12 +4,15 @@
   "private": true,
   "description": "Monorepo for the guide-recorder spike. Only extension/ exists for now; web/ and api/ come later.",
   "workspaces": [
-    "extension"
+    "extension",
+    "api"
   ],
   "scripts": {
     "build": "npm run build -w @guide-recorder/extension",
     "dev": "npm run dev -w @guide-recorder/extension",
-    "typecheck": "npm run typecheck -w @guide-recorder/extension"
+    "typecheck": "npm run typecheck -w @guide-recorder/extension && npm run typecheck -w @guide-recorder/api",
+    "api:start": "npm run start -w @guide-recorder/api",
+    "api:dev": "npm run dev -w @guide-recorder/api"
   },
   "allowScripts": {
     "esbuild@0.28.1": true

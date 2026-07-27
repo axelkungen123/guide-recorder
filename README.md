@@ -5,9 +5,9 @@ structured **step context** for later generating step-by-step guides. The goal
 is only to prove capture works reliably — no backend, AI, editing, or extra UI.
 
 ```
-extension/   # Chrome MV3 extension (TypeScript)   <- only this exists for now
+extension/   # Chrome MV3 extension (TypeScript) — records clicks, captures steps
+api/         # Backend (Hono + node:sqlite) — ingests and serves recordings
 web/         # (later)
-api/         # (later)
 ```
 
 ## Build & load
@@ -52,6 +52,35 @@ Then in Chrome:
   "screenshot": "data:image/png;base64,…"
 }
 ```
+
+## API (`api/`)
+
+Node + [Hono](https://hono.dev), storage in **SQLite via built-in `node:sqlite`**
+(no native dependency). Runs TypeScript directly on Node 24 (native type
+stripping) — no build step.
+
+```bash
+npm run api:dev      # node --watch, http://localhost:8787
+# or: npm run api:start
+```
+
+Screenshots are written to `api/data/screenshots/<recordingId>/` (kept out of
+SQLite, which stores only the relative path). The `api/data/` dir is gitignored.
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/health` | liveness |
+| `POST` | `/recordings` | ingest `{ steps: Step[], title? }` → `{ id, stepCount, … }` |
+| `GET` | `/recordings` | list summaries |
+| `GET` | `/recordings/:id` | full recording (steps carry a `screenshotUrl`, not base64) |
+| `GET` | `/recordings/:id/screenshots/:index` | PNG bytes |
+| `DELETE` | `/recordings/:id` | remove recording + its screenshots |
+
+The extension still downloads JSON locally; wiring it to POST here is the next
+step (not done yet).
+
+> Note: `api/src/types.ts` is an independent copy of the extension's step types.
+> Unify into a shared workspace package if they start to drift.
 
 ## Design notes
 
