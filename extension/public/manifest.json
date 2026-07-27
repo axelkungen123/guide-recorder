@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Guide Recorder (Spike)",
+  "version": "0.1.0",
+  "description": "Records a user's clicks and captures structured step data for step-by-step guides.",
+  "permissions": ["activeTab", "tabs", "scripting", "storage"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Guide Recorder",
+    "default_popup": "popup.html"
+  }
+}
