@@ -27,10 +27,30 @@ export interface Viewport {
   devicePixelRatio: number;
 }
 
+/** How trustworthy a selector is for re-finding the element later. */
+export type SelectorRobustness = "anchored" | "mixed" | "positional";
+
+/** A capture-time assessment of selector quality (heuristic, from the string). */
+export interface SelectorQuality {
+  robustness: SelectorRobustness;
+  /** Some segment uses a stable anchor (data-* attribute or id). */
+  hasStableAnchor: boolean;
+  /** Combinator-separated path segments (total across shadow scopes). */
+  depth: number;
+  /** Shadow-DOM boundary hops (" >> ") — not resolvable by one querySelector. */
+  shadowHops: number;
+  /** Segments relying on DOM position (:nth-of-type). */
+  positionalSegments: number;
+  /** Short human-readable reasons for the rating. */
+  notes: string[];
+}
+
 /** Structured context for a clicked element — the core of the spike. */
 export interface ElementContext {
   selector: string;
   selectorStrategy: string;
+  /** Robustness assessment of `selector` (optional: predates older recordings). */
+  selectorQuality?: SelectorQuality;
   text: string;
   urlPattern: string;
   boundingBox: BoundingBox;

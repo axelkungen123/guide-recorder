@@ -147,6 +147,20 @@ button.danger { color: #fff; background: var(--danger); border-color: var(--dang
   padding: 0 5px;
 }
 
+.quality {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 4px;
+  padding: 0 6px;
+  cursor: help;
+}
+.quality-anchored { color: #065f46; background: #d1fae5; }
+.quality-mixed { color: #92400e; background: #fef3c7; }
+.quality-positional { color: #991b1b; background: #fee2e2; }
+.quality-notes { font-size: 12px; color: var(--muted); }
+.quality-notes div { margin-top: 1px; }
+
 @media (max-width: 720px) {
   .app { grid-template-columns: 1fr; }
   .step { grid-template-columns: 1fr; }

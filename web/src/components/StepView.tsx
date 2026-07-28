@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { StoredStep } from "@guide-recorder/shared";
+import type { SelectorRobustness, StoredStep } from "@guide-recorder/shared";
 import { screenshotUrl } from "../api";
+
+const ROBUSTNESS_LABEL: Record<SelectorRobustness, string> = {
+  anchored: "stabil",
+  mixed: "blandad",
+  positional: "svag",
+};
 
 /**
  * One step: screenshot with a bounding-box overlay + the captured context.
@@ -74,7 +80,25 @@ export function StepView({ step }: { step: StoredStep }) {
         <dd>
           <code>{ctx.selector}</code>{" "}
           <span className="tag">{ctx.selectorStrategy}</span>
+          {ctx.selectorQuality && (
+            <span
+              className={`quality quality-${ctx.selectorQuality.robustness}`}
+              title={ctx.selectorQuality.notes.join("\n")}
+            >
+              {ROBUSTNESS_LABEL[ctx.selectorQuality.robustness]}
+            </span>
+          )}
         </dd>
+        {ctx.selectorQuality && ctx.selectorQuality.notes.length > 0 && (
+          <>
+            <dt>Robusthet</dt>
+            <dd className="quality-notes">
+              {ctx.selectorQuality.notes.map((note, i) => (
+                <div key={i}>{note}</div>
+              ))}
+            </dd>
+          </>
+        )}
         <dt>URL-mönster</dt>
         <dd>
           <code>{ctx.urlPattern}</code>
