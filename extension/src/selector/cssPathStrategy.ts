@@ -1,19 +1,26 @@
 import type { SelectorStrategy } from "./index";
+import { GUARDED_ATTRS, looksDynamicValue, STABLE_ATTRS } from "./anchors";
 
 /**
- * Default selector strategy: prefer stable test/id attributes, otherwise build
- * a CSS path with :nth-of-type fallbacks. Shadow boundaries are crossed and
- * joined with " >> " (a conventional, NON-standard shadow-piercing separator —
- * a single querySelector cannot resolve it; consumers must split on " >> " and
- * hop through each shadowRoot).
+ * Default selector strategy: prefer stable anchor attributes (data-testid,
+ * aria-label, name, …) or a non-generated id, otherwise build a CSS path with
+ * :nth-of-type fallbacks. Shadow boundaries are crossed and joined with " >> "
+ * (a conventional, NON-standard shadow-piercing separator — a single
+ * querySelector cannot resolve it; consumers must split on " >> " and hop
+ * through each shadowRoot).
  *
- * This is intentionally simple and self-contained so it can be replaced later.
+ * Intentionally simple and self-contained so it can be replaced later.
  */
 
 const SHADOW_SEP = " >> ";
-const PREFERRED_ATTRS = ["data-testid", "data-test", "data-cy", "data-qa"];
 
-function cssEscape(value: string): string {
+/** Escape a value for use inside a quoted attribute selector ([a="…"]). */
+function escapeAttrValue(value: string): string {
+  return value.replace(/(["\\])/g, "\\$1");
+}
+
+/** Escape a value for use as a CSS identifier (#id). */
+function cssEscapeIdent(value: string): string {
   if (typeof CSS !== "undefined" && typeof CSS.escape === "function") {
     return CSS.escape(value);
   }
@@ -40,12 +47,15 @@ function isUniqueInScope(root: Document | ShadowRoot, selector: string): boolean
 
 /** A single-element anchor (attribute/id) if one is available. */
 function anchorSelector(el: Element): string | null {
-  for (const attr of PREFERRED_ATTRS) {
+  for (const attr of STABLE_ATTRS) {
     const val = el.getAttribute(attr);
-    if (val) return `[${attr}="${cssEscape(val)}"]`;
+    if (!val) continue;
+    // Guarded attrs (aria-label/name) can embed dynamic content — skip those.
+    if (GUARDED_ATTRS.has(attr) && looksDynamicValue(val)) continue;
+    return `[${attr}="${escapeAttrValue(val)}"]`;
   }
   const id = el.getAttribute("id");
-  if (id && !looksGenerated(id)) return `#${cssEscape(id)}`;
+  if (id && !looksGenerated(id)) return `#${cssEscapeIdent(id)}`;
   return null;
 }
 
