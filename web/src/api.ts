@@ -1,4 +1,8 @@
-import type { RecordingDetail, RecordingSummary } from "@guide-recorder/shared";
+import type {
+  Guide,
+  RecordingDetail,
+  RecordingSummary,
+} from "@guide-recorder/shared";
 
 /** api base URL (override with VITE_API_BASE_URL). */
 export const API_BASE_URL =
@@ -24,6 +28,17 @@ export async function deleteRecording(id: string): Promise<void> {
   if (!res.ok && res.status !== 204) {
     throw new Error(`API responded ${res.status}`);
   }
+}
+
+export async function fetchGuide(id: string): Promise<Guide> {
+  const res = await fetch(`${API_BASE_URL}/recordings/${id}/guide`);
+  if (!res.ok) throw new Error(`API responded ${res.status}`);
+  return (await res.json()) as Guide;
+}
+
+/** URL of the downloadable Markdown guide. */
+export function guideMarkdownUrl(id: string): string {
+  return `${API_BASE_URL}/recordings/${id}/guide.md`;
 }
 
 /** Turn a relative screenshot path from the api into an absolute URL. */

@@ -7,9 +7,12 @@ export type {
   BoundingBox,
   Viewport,
   ElementContext,
+  Locator,
   Step as IncomingStep,
   IncomingRecording,
   RecordingSummary,
   StoredStep,
   RecordingDetail,
+  Guide,
+  GuideStep,
 } from "@guide-recorder/shared";

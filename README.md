@@ -78,7 +78,15 @@ SQLite, which stores only the relative path). The `api/data/` dir is gitignored.
 | `GET` | `/recordings` | list summaries |
 | `GET` | `/recordings/:id` | full recording (steps carry a `screenshotUrl`, not base64) |
 | `GET` | `/recordings/:id/screenshots/:index` | PNG bytes |
+| `GET` | `/recordings/:id/guide` | deterministic step-by-step guide (JSON) |
+| `GET` | `/recordings/:id/guide.md` | the same guide as a downloadable Markdown file |
 | `DELETE` | `/recordings/:id` | remove recording + its screenshots |
+
+**Guides** are generated deterministically from each step's primary locator +
+text (`api/src/guide.ts`) — no AI. A `role=link[name="Shorts"]` step becomes
+"Klicka på länken **Shorts**"; page changes are noted between steps. The viewer's
+**Guide** tab renders this, with a "Ladda ner .md" download. (A later pass could
+send the steps to an LLM for nicer prose.)
 
 The extension still downloads JSON locally; wiring it to POST here is the next
 step (not done yet).

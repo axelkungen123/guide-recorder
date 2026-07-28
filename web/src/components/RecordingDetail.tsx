@@ -2,15 +2,19 @@ import { useEffect, useState } from "react";
 import type { RecordingDetail } from "@guide-recorder/shared";
 import { deleteRecording, fetchRecording } from "../api";
 import { StepView } from "./StepView";
+import { GuideView } from "./GuideView";
 
 interface Props {
   id: string;
   onDeleted: () => void;
 }
 
+type Tab = "guide" | "steps";
+
 export function RecordingDetailView({ id, onDeleted }: Props) {
   const [detail, setDetail] = useState<RecordingDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState<Tab>("guide");
 
   useEffect(() => {
     let active = true;
@@ -49,13 +53,33 @@ export function RecordingDetailView({ id, onDeleted }: Props) {
           Ta bort
         </button>
       </header>
-      <ol className="steps">
-        {detail.steps.map((step) => (
-          <li key={step.index}>
-            <StepView step={step} />
-          </li>
-        ))}
-      </ol>
+
+      <div className="tabs">
+        <button
+          className={tab === "guide" ? "tab active" : "tab"}
+          onClick={() => setTab("guide")}
+        >
+          Guide
+        </button>
+        <button
+          className={tab === "steps" ? "tab active" : "tab"}
+          onClick={() => setTab("steps")}
+        >
+          Steg (rådata)
+        </button>
+      </div>
+
+      {tab === "guide" ? (
+        <GuideView id={id} />
+      ) : (
+        <ol className="steps">
+          {detail.steps.map((step) => (
+            <li key={step.index}>
+              <StepView step={step} />
+            </li>
+          ))}
+        </ol>
+      )}
     </div>
   );
 }

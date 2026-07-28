@@ -9,6 +9,7 @@ import {
   remove,
 } from "./repository.ts";
 import { screenshotAbsPath } from "./storage.ts";
+import { buildGuide, guideToMarkdown } from "./guide.ts";
 import type { IncomingRecording, IncomingStep } from "./types.ts";
 
 export const app = new Hono();
@@ -46,6 +47,26 @@ app.get("/recordings/:id", (c) => {
   const detail = getDetail(c.req.param("id"));
   if (!detail) return c.json({ error: "Not found" }, 404);
   return c.json(detail);
+});
+
+// --- Generated guide (structured) ---
+app.get("/recordings/:id/guide", (c) => {
+  const detail = getDetail(c.req.param("id"));
+  if (!detail) return c.json({ error: "Not found" }, 404);
+  return c.json(buildGuide(detail));
+});
+
+// --- Generated guide (Markdown download) ---
+app.get("/recordings/:id/guide.md", (c) => {
+  const id = c.req.param("id");
+  const detail = getDetail(id);
+  if (!detail) return c.json({ error: "Not found" }, 404);
+  const origin = new URL(c.req.url).origin;
+  const markdown = guideToMarkdown(buildGuide(detail), origin);
+  return c.body(markdown, 200, {
+    "Content-Type": "text/markdown; charset=utf-8",
+    "Content-Disposition": `attachment; filename="guide-${id}.md"`,
+  });
 });
 
 // --- Screenshot bytes ---

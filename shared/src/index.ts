@@ -146,3 +146,31 @@ export interface StoredStep {
 export interface RecordingDetail extends RecordingSummary {
   steps: StoredStep[];
 }
+
+// ---------------------------------------------------------------------------
+// Guide — a deterministic, human-readable rendering of a recording. `action`
+// and `target` are kept separate so consumers can style the target (bold or
+// code) without parsing markdown.
+// ---------------------------------------------------------------------------
+
+export interface GuideStep {
+  /** 1-based step number in the guide. */
+  index: number;
+  /** Instruction verb phrase, e.g. "Klicka på länken". */
+  action: string;
+  /** The element's name/text, e.g. "Prenumerationer" (absent when unknown). */
+  target?: string;
+  /** Render `target` as code (a raw selector) rather than emphasized text. */
+  targetIsCode?: boolean;
+  screenshotUrl: string | null;
+  url: string;
+  /** Set when the page (url_pattern) changed from the previous step. */
+  navigatedTo?: string;
+}
+
+export interface Guide {
+  title: string;
+  createdAt: number;
+  startUrl: string | null;
+  steps: GuideStep[];
+}
