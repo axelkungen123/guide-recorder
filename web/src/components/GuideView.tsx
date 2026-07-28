@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { Guide, GuideStep } from "@guide-recorder/shared";
 import {
   fetchGuide,
+  guideHtmlUrl,
   guideMarkdownUrl,
   resetGuide,
   saveGuide,
@@ -111,6 +112,9 @@ export function GuideView({ id }: Props) {
         </button>
         <a className="btn-link" href={guideMarkdownUrl(id)} download>
           Ladda ner .md
+        </a>
+        <a className="btn-link" href={guideHtmlUrl(id)} download>
+          Exportera .html
         </a>
       </div>
 

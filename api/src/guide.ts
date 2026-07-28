@@ -147,3 +147,91 @@ function renderInstruction(step: GuideStep): string {
   const target = step.targetIsCode ? `\`${step.target}\`` : `**${step.target}**`;
   return `${step.action} ${target}`;
 }
+
+/**
+ * Render a guide to a self-contained HTML document. `screenshotDataUri` maps a
+ * step's screenshotUrl to an inlined `data:` URI (or null) so the file works
+ * offline and can be shared without the api running.
+ */
+export function guideToHtml(
+  guide: Guide,
+  screenshotDataUri: (screenshotUrl: string) => string | null,
+): string {
+  const stepsHtml = guide.steps
+    .map((step) => {
+      const nav = step.navigatedTo
+        ? `<p class="nav">Sidan ändras till <code>${esc(step.navigatedTo)}</code></p>`
+        : "";
+      const dataUri = step.screenshotUrl
+        ? screenshotDataUri(step.screenshotUrl)
+        : null;
+      const img = dataUri
+        ? `<img src="${dataUri}" alt="Steg ${step.index}" />`
+        : "";
+      return `
+      <li class="step">
+        ${nav}
+        <p class="instruction">${instructionHtml(step)}</p>
+        ${img}
+      </li>`;
+    })
+    .join("\n");
+
+  const start = guide.startUrl
+    ? `<p class="start">Börja på <code>${esc(guide.startUrl)}</code></p>`
+    : "";
+
+  return `<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>${esc(guide.title)}</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { max-width: 760px; margin: 40px auto; padding: 0 20px;
+    font: 16px/1.6 system-ui, sans-serif; color: #1a1c20; background: #fff; }
+  @media (prefers-color-scheme: dark) { body { color: #e6e8ec; background: #14161a; } }
+  h1 { font-size: 26px; margin: 0 0 4px; }
+  .meta, .start { color: #6b7280; }
+  .start { margin-top: 0; }
+  code { font-family: ui-monospace, Menlo, monospace; font-size: 0.85em;
+    background: rgba(127,127,127,.15); padding: 1px 5px; border-radius: 4px; }
+  ol { list-style: none; counter-reset: s; padding: 0; margin: 28px 0 0; }
+  .step { counter-increment: s; position: relative; padding-left: 44px; margin-bottom: 32px; }
+  .step::before { content: counter(s); position: absolute; left: 0; top: 0;
+    width: 30px; height: 30px; border-radius: 999px; background: #2563eb; color: #fff;
+    font-weight: 600; display: flex; align-items: center; justify-content: center; }
+  .instruction { font-size: 17px; margin: 3px 0 10px; }
+  .nav { font-size: 13px; color: #6b7280; margin: 0 0 6px; }
+  img { max-width: 100%; border: 1px solid rgba(127,127,127,.35); border-radius: 8px; display: block; }
+</style>
+</head>
+<body>
+  <h1>${esc(guide.title)}</h1>
+  <p class="meta">${guide.steps.length} steg · ${esc(new Date(guide.createdAt).toLocaleString())}</p>
+  ${start}
+  <ol>${stepsHtml}
+  </ol>
+</body>
+</html>
+`;
+}
+
+function instructionHtml(step: GuideStep): string {
+  const override = step.instructionOverride?.trim();
+  if (override) return esc(override);
+  if (!step.target) return esc(step.action);
+  const target = step.targetIsCode
+    ? `<code>${esc(step.target)}</code>`
+    : `<strong>${esc(step.target)}</strong>`;
+  return `${esc(step.action)} ${target}`;
+}
+
+function esc(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}

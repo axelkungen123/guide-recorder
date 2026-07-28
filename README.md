@@ -82,6 +82,7 @@ SQLite, which stores only the relative path). The `api/data/` dir is gitignored.
 | `PUT` | `/recordings/:id/guide` | save an edited guide |
 | `POST` | `/recordings/:id/guide/reset` | discard edits, regenerate |
 | `GET` | `/recordings/:id/guide.md` | the current guide as a downloadable Markdown file |
+| `GET` | `/recordings/:id/guide.html` | self-contained HTML guide (screenshots inlined as data URIs) |
 | `DELETE` | `/recordings/:id` | remove recording + its screenshots |
 
 **Guides** are generated deterministically from each step's primary locator +

@@ -12,7 +12,12 @@ import {
   saveGuide,
 } from "./repository.ts";
 import { screenshotAbsPath } from "./storage.ts";
-import { buildGuide, guideToMarkdown, normalizeGuide } from "./guide.ts";
+import {
+  buildGuide,
+  guideToHtml,
+  guideToMarkdown,
+  normalizeGuide,
+} from "./guide.ts";
 import type { Guide, IncomingRecording, IncomingStep } from "./types.ts";
 
 /** The saved (edited) guide if present, otherwise one generated from the recording. */
@@ -21,6 +26,21 @@ function resolveGuide(id: string): Guide | null {
   if (saved) return saved;
   const detail = getDetail(id);
   return detail ? buildGuide(detail) : null;
+}
+
+/** Read a step's screenshot and return it as an inline data: URI, or null. */
+function screenshotDataUri(recordingId: string, screenshotUrl: string): string | null {
+  const match = /\/screenshots\/(\d+)$/.exec(screenshotUrl);
+  if (!match) return null;
+  const relPath = getStepScreenshotPath(recordingId, Number(match[1]));
+  if (!relPath) return null;
+  try {
+    const bytes = readFileSync(screenshotAbsPath(relPath));
+    const mime = relPath.endsWith(".jpg") ? "image/jpeg" : "image/png";
+    return `data:${mime};base64,${bytes.toString("base64")}`;
+  } catch {
+    return null;
+  }
 }
 
 export const app = new Hono();
@@ -93,6 +113,18 @@ app.post("/recordings/:id/guide/reset", (c) => {
   if (!detail) return c.json({ error: "Not found" }, 404);
   resetGuide(id);
   return c.json(buildGuide(detail));
+});
+
+// --- Guide (self-contained HTML download, screenshots inlined) ---
+app.get("/recordings/:id/guide.html", (c) => {
+  const id = c.req.param("id");
+  const guide = resolveGuide(id);
+  if (!guide) return c.json({ error: "Not found" }, 404);
+  const html = guideToHtml(guide, (url) => screenshotDataUri(id, url));
+  return c.body(html, 200, {
+    "Content-Type": "text/html; charset=utf-8",
+    "Content-Disposition": `attachment; filename="guide-${id}.html"`,
+  });
 });
 
 // --- Guide (Markdown download) ---

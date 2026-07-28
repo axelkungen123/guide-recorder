@@ -61,6 +61,11 @@ export function guideMarkdownUrl(id: string): string {
   return `${API_BASE_URL}/recordings/${id}/guide.md`;
 }
 
+/** URL of the self-contained HTML guide (screenshots inlined). */
+export function guideHtmlUrl(id: string): string {
+  return `${API_BASE_URL}/recordings/${id}/guide.html`;
+}
+
 /** Turn a relative screenshot path from the api into an absolute URL. */
 export function screenshotUrl(path: string): string {
   return `${API_BASE_URL}${path}`;
