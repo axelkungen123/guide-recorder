@@ -104,9 +104,18 @@ api URL with `VITE_API_BASE_URL`.
 
 ## Design notes
 
+- **Locators, not just CSS** — each step carries a ranked `locators[]` list
+  (best first): `testid` → `role`+accessible-name → `text` → `css` fallback
+  (Playwright-ish). Role/name come from a pragmatic ARIA subset
+  (`src/selector/aria.ts`); the CSS fallback comes from the swappable strategy.
+  `selectorQuality.robustness` grades the **primary** locator, and the viewer
+  shows the whole ranked chain. This gives downstream replay/guide-generation
+  several ways to re-find an element.
 - **Selector generation is pluggable** — `src/selector/index.ts` exposes a
   `SelectorStrategy` interface; the default `css-path-v1` lives in
-  `cssPathStrategy.ts` and can be swapped via `setSelectorStrategy(...)`.
+  `cssPathStrategy.ts` and can be swapped via `setSelectorStrategy(...)`. It
+  prefers stable anchors (`data-testid`, `aria-label`, `name`, non-generated
+  `id`) before falling back to a `:nth-of-type` path.
 - **Screenshots run in the background worker** (content scripts can't call
   `captureVisibleTab`) and are **rate-limited/queued** in `screenshotQueue.ts`
   (~2/sec cap). Steps are buffered immediately; screenshots are filled in async.

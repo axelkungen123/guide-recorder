@@ -1,5 +1,6 @@
 import { getSelectorStrategy } from "../selector";
-import { analyzeSelector } from "../selector/quality";
+import { buildLocators, formatLocator } from "../selector/locators";
+import { gradeLocators } from "../selector/quality";
 import type { StepPayload } from "../shared/messages";
 import type { BoundingBox, ElementContext } from "../shared/types";
 
@@ -11,7 +12,7 @@ export function extractStep(event: MouseEvent): StepPayload | null {
   if (!target) return null;
 
   const strategy = getSelectorStrategy();
-  const selector = strategy.generate(target);
+  const locators = buildLocators(target);
   const rect = target.getBoundingClientRect();
   const boundingBox: BoundingBox = {
     x: rect.x,
@@ -22,9 +23,10 @@ export function extractStep(event: MouseEvent): StepPayload | null {
 
   const path = safeComposedPath(event);
   const context: ElementContext = {
-    selector,
+    selector: formatLocator(locators[0]),
     selectorStrategy: strategy.name,
-    selectorQuality: analyzeSelector(selector),
+    locators,
+    selectorQuality: gradeLocators(locators),
     text: normalizeText(getVisibleText(target)),
     urlPattern: toUrlPattern(location.href),
     boundingBox,

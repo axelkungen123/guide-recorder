@@ -27,19 +27,59 @@ export interface Viewport {
   devicePixelRatio: number;
 }
 
-/** How trustworthy a selector is for re-finding the element later. */
+// ---------------------------------------------------------------------------
+// Locators — a small, typed selector language beyond raw CSS. The extension
+// emits a ranked list (best first); downstream (viewer, future replay / guide
+// generation) can render or try them in order.
+// ---------------------------------------------------------------------------
+
+export type LocatorKind = "testid" | "role" | "text" | "css";
+
+/** A test-id attribute anchor, e.g. [data-testid="save"]. */
+export interface TestIdLocator {
+  kind: "testid";
+  attr: string;
+  value: string;
+}
+
+/** An ARIA role + accessible name, e.g. getByRole('button', { name: 'Save' }). */
+export interface RoleLocator {
+  kind: "role";
+  role: string;
+  name?: string;
+}
+
+/** Visible text, e.g. getByText('Save'). */
+export interface TextLocator {
+  kind: "text";
+  value: string;
+  exact: boolean;
+}
+
+/** A CSS path (with " >> " for shadow hops) — the last-resort fallback. */
+export interface CssLocator {
+  kind: "css";
+  value: string;
+}
+
+export type Locator = TestIdLocator | RoleLocator | TextLocator | CssLocator;
+
+/** How trustworthy the primary locator is for re-finding the element later. */
 export type SelectorRobustness = "anchored" | "mixed" | "positional";
 
-/** A capture-time assessment of selector quality (heuristic, from the string). */
+/** A capture-time assessment of selector/locator quality (heuristic). */
 export interface SelectorQuality {
+  /** Grade of the PRIMARY (best) locator. */
   robustness: SelectorRobustness;
-  /** Some segment uses a stable anchor (data-* attribute or id). */
+  /** Kind of the primary locator (optional: predates older recordings). */
+  primaryKind?: LocatorKind;
+  /** The primary locator relies on a stable anchor / semantic identity. */
   hasStableAnchor: boolean;
-  /** Combinator-separated path segments (total across shadow scopes). */
+  /** CSS-fallback metric: combinator-separated path segments. */
   depth: number;
-  /** Shadow-DOM boundary hops (" >> ") — not resolvable by one querySelector. */
+  /** CSS-fallback metric: shadow-DOM boundary hops (" >> "). */
   shadowHops: number;
-  /** Segments relying on DOM position (:nth-of-type). */
+  /** CSS-fallback metric: segments relying on DOM position (:nth-of-type). */
   positionalSegments: number;
   /** Short human-readable reasons for the rating. */
   notes: string[];
@@ -47,9 +87,12 @@ export interface SelectorQuality {
 
 /** Structured context for a clicked element — the core of the spike. */
 export interface ElementContext {
+  /** Display string of the primary (best) locator. */
   selector: string;
   selectorStrategy: string;
-  /** Robustness assessment of `selector` (optional: predates older recordings). */
+  /** Ranked locators, best first (optional: predates older recordings). */
+  locators?: Locator[];
+  /** Robustness assessment of the primary locator (optional: predates older). */
   selectorQuality?: SelectorQuality;
   text: string;
   urlPattern: string;

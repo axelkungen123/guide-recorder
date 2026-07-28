@@ -161,6 +161,19 @@ button.danger { color: #fff; background: var(--danger); border-color: var(--dang
 .quality-notes { font-size: 12px; color: var(--muted); }
 .quality-notes div { margin-top: 1px; }
 
+.locators { display: flex; flex-direction: column; gap: 3px; }
+.loc { display: flex; align-items: baseline; gap: 6px; }
+.loc.primary { font-weight: 600; }
+.loc-kind {
+  flex: none;
+  width: 52px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.loc code { word-break: break-all; }
+
 @media (max-width: 720px) {
   .app { grid-template-columns: 1fr; }
   .step { grid-template-columns: 1fr; }

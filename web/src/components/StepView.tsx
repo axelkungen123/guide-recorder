@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { SelectorRobustness, StoredStep } from "@guide-recorder/shared";
+import type {
+  Locator,
+  SelectorRobustness,
+  StoredStep,
+} from "@guide-recorder/shared";
 import { screenshotUrl } from "../api";
 
 const ROBUSTNESS_LABEL: Record<SelectorRobustness, string> = {
@@ -7,6 +11,20 @@ const ROBUSTNESS_LABEL: Record<SelectorRobustness, string> = {
   mixed: "blandad",
   positional: "svag",
 };
+
+/** Human-readable, Playwright-ish rendering of a locator (mirrors the extension). */
+function formatLocator(loc: Locator): string {
+  switch (loc.kind) {
+    case "testid":
+      return `[${loc.attr}="${loc.value}"]`;
+    case "role":
+      return loc.name ? `role=${loc.role}[name="${loc.name}"]` : `role=${loc.role}`;
+    case "text":
+      return loc.exact ? `text="${loc.value}"` : `text=${loc.value}`;
+    case "css":
+      return loc.value;
+  }
+}
 
 /**
  * One step: screenshot with a bounding-box overlay + the captured context.
@@ -76,10 +94,12 @@ export function StepView({ step }: { step: StoredStep }) {
       <dl className="ctx">
         <dt>Text</dt>
         <dd>{ctx.text || <em>—</em>}</dd>
-        <dt>Selektor</dt>
+        <dt>Primär lokaliserare</dt>
         <dd>
           <code>{ctx.selector}</code>{" "}
-          <span className="tag">{ctx.selectorStrategy}</span>
+          {ctx.selectorQuality?.primaryKind && (
+            <span className="tag">{ctx.selectorQuality.primaryKind}</span>
+          )}
           {ctx.selectorQuality && (
             <span
               className={`quality quality-${ctx.selectorQuality.robustness}`}
@@ -89,6 +109,19 @@ export function StepView({ step }: { step: StoredStep }) {
             </span>
           )}
         </dd>
+        {ctx.locators && ctx.locators.length > 0 && (
+          <>
+            <dt>Lokaliserare (rankade)</dt>
+            <dd className="locators">
+              {ctx.locators.map((loc, i) => (
+                <div key={i} className={i === 0 ? "loc primary" : "loc"}>
+                  <span className="loc-kind">{loc.kind}</span>
+                  <code>{formatLocator(loc)}</code>
+                </div>
+              ))}
+            </dd>
+          </>
+        )}
         {ctx.selectorQuality && ctx.selectorQuality.notes.length > 0 && (
           <>
             <dt>Robusthet</dt>
