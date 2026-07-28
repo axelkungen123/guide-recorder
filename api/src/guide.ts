@@ -13,35 +13,45 @@ import type {
  */
 
 export function buildGuide(recording: RecordingDetail): Guide {
-  const steps: GuideStep[] = [];
-  let prevPattern: string | null = null;
-
-  for (const step of recording.steps) {
+  const steps: GuideStep[] = recording.steps.map((step) => {
     const described = describe(step);
-    const pattern = step.elementContext.urlPattern;
-    const navigatedTo =
-      prevPattern !== null && pattern !== prevPattern ? pattern : undefined;
-    prevPattern = pattern;
-
-    steps.push({
-      index: steps.length + 1,
+    return {
+      id: `s${step.index}`,
+      index: 0, // set by normalizeGuide
       action: described.action,
       target: described.target,
       targetIsCode: described.targetIsCode,
       screenshotUrl: step.screenshotUrl,
       url: step.url,
-      navigatedTo,
-    });
-  }
+      urlPattern: step.elementContext.urlPattern,
+    };
+  });
 
-  return {
+  return normalizeGuide({
     title:
       recording.title ??
       `Guide ${new Date(recording.createdAt).toLocaleString()}`,
     createdAt: recording.createdAt,
     startUrl: recording.firstUrl,
     steps,
-  };
+  });
+}
+
+/**
+ * Recompute derived fields after edits: 1-based `index` in the current order and
+ * `navigatedTo` (set when a step's page differs from the previous step's).
+ */
+export function normalizeGuide(guide: Guide): Guide {
+  let prevPattern: string | null = null;
+  const steps = guide.steps.map((step, i) => {
+    const navigatedTo =
+      prevPattern !== null && step.urlPattern !== prevPattern
+        ? step.urlPattern
+        : undefined;
+    prevPattern = step.urlPattern;
+    return { ...step, index: i + 1, navigatedTo };
+  });
+  return { ...guide, steps };
 }
 
 interface Described {
@@ -120,7 +130,7 @@ export function guideToMarkdown(guide: Guide, screenshotBase = ""): string {
       out.push(`> Sidan ändras till \`${step.navigatedTo}\``, "");
     }
     out.push(`## Steg ${step.index}`, "");
-    out.push(`${step.action}${renderTarget(step)}`, "");
+    out.push(renderInstruction(step), "");
     if (step.screenshotUrl) {
       out.push(`![Steg ${step.index}](${screenshotBase}${step.screenshotUrl})`, "");
     }
@@ -129,7 +139,11 @@ export function guideToMarkdown(guide: Guide, screenshotBase = ""): string {
   return out.join("\n").trimEnd() + "\n";
 }
 
-function renderTarget(step: GuideStep): string {
-  if (!step.target) return "";
-  return step.targetIsCode ? ` \`${step.target}\`` : ` **${step.target}**`;
+/** Markdown for a step's instruction: override as-is, else action + styled target. */
+function renderInstruction(step: GuideStep): string {
+  const override = step.instructionOverride?.trim();
+  if (override) return override;
+  if (!step.target) return step.action;
+  const target = step.targetIsCode ? `\`${step.target}\`` : `**${step.target}**`;
+  return `${step.action} ${target}`;
 }

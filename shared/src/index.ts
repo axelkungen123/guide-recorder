@@ -154,7 +154,9 @@ export interface RecordingDetail extends RecordingSummary {
 // ---------------------------------------------------------------------------
 
 export interface GuideStep {
-  /** 1-based step number in the guide. */
+  /** Stable id (survives reorder/edit), e.g. "s0". */
+  id: string;
+  /** 1-based step number in the guide (recomputed on reorder). */
   index: number;
   /** Instruction verb phrase, e.g. "Klicka på länken". */
   action: string;
@@ -162,8 +164,12 @@ export interface GuideStep {
   target?: string;
   /** Render `target` as code (a raw selector) rather than emphasized text. */
   targetIsCode?: boolean;
+  /** User-edited instruction; when set, replaces action+target everywhere. */
+  instructionOverride?: string;
   screenshotUrl: string | null;
   url: string;
+  /** Generalized url of the step's page — used to recompute navigatedTo. */
+  urlPattern: string;
   /** Set when the page (url_pattern) changed from the previous step. */
   navigatedTo?: string;
 }

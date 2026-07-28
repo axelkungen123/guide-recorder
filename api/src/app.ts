@@ -4,13 +4,24 @@ import { readFileSync } from "node:fs";
 import {
   createRecording,
   getDetail,
+  getSavedGuide,
   getStepScreenshotPath,
   listAll,
   remove,
+  resetGuide,
+  saveGuide,
 } from "./repository.ts";
 import { screenshotAbsPath } from "./storage.ts";
-import { buildGuide, guideToMarkdown } from "./guide.ts";
-import type { IncomingRecording, IncomingStep } from "./types.ts";
+import { buildGuide, guideToMarkdown, normalizeGuide } from "./guide.ts";
+import type { Guide, IncomingRecording, IncomingStep } from "./types.ts";
+
+/** The saved (edited) guide if present, otherwise one generated from the recording. */
+function resolveGuide(id: string): Guide | null {
+  const saved = getSavedGuide(id);
+  if (saved) return saved;
+  const detail = getDetail(id);
+  return detail ? buildGuide(detail) : null;
+}
 
 export const app = new Hono();
 
@@ -49,20 +60,48 @@ app.get("/recordings/:id", (c) => {
   return c.json(detail);
 });
 
-// --- Generated guide (structured) ---
+// --- Guide (saved edits if any, else generated) ---
 app.get("/recordings/:id/guide", (c) => {
-  const detail = getDetail(c.req.param("id"));
-  if (!detail) return c.json({ error: "Not found" }, 404);
-  return c.json(buildGuide(detail));
+  const guide = resolveGuide(c.req.param("id"));
+  if (!guide) return c.json({ error: "Not found" }, 404);
+  return c.json(guide);
 });
 
-// --- Generated guide (Markdown download) ---
-app.get("/recordings/:id/guide.md", (c) => {
+// --- Save edited guide ---
+app.put("/recordings/:id/guide", async (c) => {
+  const id = c.req.param("id");
+  if (!getDetail(id)) return c.json({ error: "Not found" }, 404);
+
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "Invalid JSON body" }, 400);
+  }
+  if (!isGuideShape(body)) {
+    return c.json({ error: "Body must be a guide with a steps array" }, 400);
+  }
+  const normalized = normalizeGuide(body);
+  saveGuide(id, normalized);
+  return c.json(normalized);
+});
+
+// --- Reset guide to the generated version (discard edits) ---
+app.post("/recordings/:id/guide/reset", (c) => {
   const id = c.req.param("id");
   const detail = getDetail(id);
   if (!detail) return c.json({ error: "Not found" }, 404);
+  resetGuide(id);
+  return c.json(buildGuide(detail));
+});
+
+// --- Guide (Markdown download) ---
+app.get("/recordings/:id/guide.md", (c) => {
+  const id = c.req.param("id");
+  const guide = resolveGuide(id);
+  if (!guide) return c.json({ error: "Not found" }, 404);
   const origin = new URL(c.req.url).origin;
-  const markdown = guideToMarkdown(buildGuide(detail), origin);
+  const markdown = guideToMarkdown(guide, origin);
   return c.body(markdown, 200, {
     "Content-Type": "text/markdown; charset=utf-8",
     "Content-Disposition": `attachment; filename="guide-${id}.md"`,
@@ -134,4 +173,20 @@ function isStep(step: unknown): step is IncomingStep {
     typeof s.elementContext === "object" &&
     s.elementContext !== null
   );
+}
+
+function isGuideShape(body: unknown): body is Guide {
+  if (typeof body !== "object" || body === null) return false;
+  const g = body as Record<string, unknown>;
+  if (typeof g.title !== "string" || !Array.isArray(g.steps)) return false;
+  return g.steps.every((step) => {
+    if (typeof step !== "object" || step === null) return false;
+    const s = step as Record<string, unknown>;
+    return (
+      typeof s.id === "string" &&
+      typeof s.action === "string" &&
+      typeof s.url === "string" &&
+      typeof s.urlPattern === "string"
+    );
+  });
 }

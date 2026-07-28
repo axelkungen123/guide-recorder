@@ -45,4 +45,11 @@ db.exec(`
 
   CREATE INDEX IF NOT EXISTS idx_recordings_created_at
     ON recordings (created_at DESC);
+
+  CREATE TABLE IF NOT EXISTS guides (
+    recording_id TEXT PRIMARY KEY,
+    json         TEXT NOT NULL,           -- JSON-encoded edited Guide
+    updated_at   INTEGER NOT NULL,
+    FOREIGN KEY (recording_id) REFERENCES recordings(id) ON DELETE CASCADE
+  );
 `);

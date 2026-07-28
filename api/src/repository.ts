@@ -3,6 +3,7 @@ import { db } from "./db.ts";
 import { deleteScreenshots, saveScreenshot } from "./storage.ts";
 import type {
   ElementContext,
+  Guide,
   IncomingRecording,
   RecordingDetail,
   RecordingSummary,
@@ -143,6 +144,32 @@ export function getStepScreenshotPath(
     | { screenshot_path: string | null }
     | undefined;
   return row?.screenshot_path ?? null;
+}
+
+// --- saved (edited) guides ---
+
+const upsertGuide = db.prepare(
+  `INSERT INTO guides (recording_id, json, updated_at) VALUES (?, ?, ?)
+   ON CONFLICT(recording_id) DO UPDATE SET json = excluded.json, updated_at = excluded.updated_at`,
+);
+const selectGuide = db.prepare(
+  `SELECT json FROM guides WHERE recording_id = ?`,
+);
+const deleteGuide = db.prepare(`DELETE FROM guides WHERE recording_id = ?`);
+
+/** The user-edited guide for a recording, or null if none saved. */
+export function getSavedGuide(recordingId: string): Guide | null {
+  const row = selectGuide.get(recordingId) as { json: string } | undefined;
+  return row ? (JSON.parse(row.json) as Guide) : null;
+}
+
+export function saveGuide(recordingId: string, guide: Guide): void {
+  upsertGuide.run(recordingId, JSON.stringify(guide), Date.now());
+}
+
+/** Drop the saved guide so it regenerates from the recording. */
+export function resetGuide(recordingId: string): void {
+  deleteGuide.run(recordingId);
 }
 
 /** Returns true if a recording existed and was removed. */

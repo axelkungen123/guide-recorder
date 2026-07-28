@@ -36,6 +36,26 @@ export async function fetchGuide(id: string): Promise<Guide> {
   return (await res.json()) as Guide;
 }
 
+/** Persist an edited guide; returns the normalized (re-indexed) guide. */
+export async function saveGuide(id: string, guide: Guide): Promise<Guide> {
+  const res = await fetch(`${API_BASE_URL}/recordings/${id}/guide`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(guide),
+  });
+  if (!res.ok) throw new Error(`API responded ${res.status}`);
+  return (await res.json()) as Guide;
+}
+
+/** Discard edits and return the freshly generated guide. */
+export async function resetGuide(id: string): Promise<Guide> {
+  const res = await fetch(`${API_BASE_URL}/recordings/${id}/guide/reset`, {
+    method: "POST",
+  });
+  if (!res.ok) throw new Error(`API responded ${res.status}`);
+  return (await res.json()) as Guide;
+}
+
 /** URL of the downloadable Markdown guide. */
 export function guideMarkdownUrl(id: string): string {
   return `${API_BASE_URL}/recordings/${id}/guide.md`;
