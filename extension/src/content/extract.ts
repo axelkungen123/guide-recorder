@@ -1,5 +1,9 @@
 import { getSelectorStrategy } from "../selector";
-import { buildLocators, formatLocator } from "../selector/locators";
+import {
+  buildLocators,
+  formatLocator,
+  resolveInteractiveTarget,
+} from "../selector/locators";
 import { gradeLocators } from "../selector/quality";
 import type { StepPayload } from "../shared/messages";
 import type { BoundingBox, ElementContext } from "../shared/types";
@@ -8,8 +12,12 @@ const MAX_TEXT = 200;
 
 /** Build a step payload from a click event, or null if unusable. */
 export function extractStep(event: MouseEvent): StepPayload | null {
-  const target = resolveTarget(event);
-  if (!target) return null;
+  const clicked = resolveTarget(event);
+  if (!clicked) return null;
+
+  // Attribute the click to the nearest interactive ancestor (button, link, …)
+  // so locators, bbox, and text describe the control rather than an inner icon.
+  const target = resolveInteractiveTarget(clicked);
 
   const strategy = getSelectorStrategy();
   const locators = buildLocators(target);
