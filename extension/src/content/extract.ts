@@ -25,6 +25,11 @@ export function extractStep(event: MouseEvent): StepPayload | null {
     text: normalizeText(getVisibleText(target)),
     urlPattern: toUrlPattern(location.href),
     boundingBox,
+    viewport: {
+      width: window.innerWidth,
+      height: window.innerHeight,
+      devicePixelRatio: window.devicePixelRatio,
+    },
     inShadowDom: path.some((n) => n instanceof ShadowRoot),
     inIframe: window.top !== window.self,
     frameUrl: location.href,

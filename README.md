@@ -5,10 +5,14 @@ structured **step context** for later generating step-by-step guides. The goal
 is only to prove capture works reliably — no backend, AI, editing, or extra UI.
 
 ```
+shared/      # Shared TypeScript types (capture types + api DTOs) — single source of truth
 extension/   # Chrome MV3 extension (TypeScript) — records clicks, captures steps
 api/         # Backend (Hono + node:sqlite) — ingests and serves recordings
-web/         # (later)
+web/         # Viewer (Vite + React) — lists recordings, shows steps with a bbox overlay
 ```
+
+All packages are npm workspaces. Types live once in `@guide-recorder/shared` and
+are imported (type-only) by the other three, so they can't drift.
 
 ## Build & load
 
@@ -81,6 +85,22 @@ step (not done yet).
 
 > Note: `api/src/types.ts` is an independent copy of the extension's step types.
 > Unify into a shared workspace package if they start to drift.
+
+## Web viewer (`web/`)
+
+Vite + React + TypeScript. Reads only from the api.
+
+```bash
+npm run api:dev      # terminal 1 — http://localhost:8787
+npm run web:dev      # terminal 2 — http://localhost:5173
+```
+
+Lists recordings; clicking one shows each step with the screenshot, a **bounding-box
+overlay**, and the captured selector / text / url_pattern / flags. The overlay maps
+the CSS-px bbox onto the screenshot using the captured `viewport` (scale =
+renderedWidth / viewport.width, DPR-independent); it's skipped for iframe clicks
+where the full-tab screenshot doesn't match the frame-relative bbox. Override the
+api URL with `VITE_API_BASE_URL`.
 
 ## Design notes
 

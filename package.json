@@ -2,17 +2,20 @@
   "name": "guide-recorder-monorepo",
   "version": "0.0.0",
   "private": true,
-  "description": "Monorepo for the guide-recorder spike. Only extension/ exists for now; web/ and api/ come later.",
+  "description": "Monorepo for the guide-recorder spike: extension/ (capture), api/ (ingest+serve), web/ (viewer), shared/ (types).",
   "workspaces": [
+    "shared",
     "extension",
-    "api"
+    "api",
+    "web"
   ],
   "scripts": {
-    "build": "npm run build -w @guide-recorder/extension",
+    "build": "npm run build -w @guide-recorder/extension && npm run build -w @guide-recorder/web",
     "dev": "npm run dev -w @guide-recorder/extension",
-    "typecheck": "npm run typecheck -w @guide-recorder/extension && npm run typecheck -w @guide-recorder/api",
+    "typecheck": "npm run typecheck -w @guide-recorder/shared && npm run typecheck -w @guide-recorder/extension && npm run typecheck -w @guide-recorder/api && npm run typecheck -w @guide-recorder/web",
     "api:start": "npm run start -w @guide-recorder/api",
-    "api:dev": "npm run dev -w @guide-recorder/api"
+    "api:dev": "npm run dev -w @guide-recorder/api",
+    "web:dev": "npm run dev -w @guide-recorder/web"
   },
   "allowScripts": {
     "esbuild@0.28.1": true

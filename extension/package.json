@@ -9,6 +9,9 @@
     "dev": "node build.mjs --watch",
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "@guide-recorder/shared": "*"
+  },
   "devDependencies": {
     "@types/chrome": "^0.2.2",
     "esbuild": "^0.28.1",
